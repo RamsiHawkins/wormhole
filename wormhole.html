@@ -106,6 +106,21 @@ function newApple() {
   // canvas is 400x400 which is 25x25 grids 
   apple.x = getRandomInt(0, 25) * grid;
   apple.y = getRandomInt(0, 25) * grid;
+
+  // check collisions with wormholes
+  if (wormhole.x1 === apple.x && wormhole.y1 === apple.y) {
+    newApple();
+  }
+  if (wormhole.x2 === apple.x && wormhole.y2 === apple.y) {
+    newApple();
+  }
+
+  // check collision with all snake cells
+  for (var i = 0; i < snake.cells.length; i++) {
+    if (apple.x === snake.cells[i].x && apple.y === snake.cells[i].y) {
+      newApple();
+    }
+  }
 }
 
 function drawApple() {
@@ -120,58 +135,35 @@ function newWormholes() {
   wormhole.x2 = getRandomInt(0, 25) * grid;
   wormhole.y2 = getRandomInt(0, 25) * grid;
 
+  // check collisions with apple
+  if (wormhole.x1 === apple.x && wormhole.y1 === apple.y) {
+    newWormholes();
+  }
+  if (wormhole.x2 === apple.x && wormhole.y2 === apple.y) {
+    newWormholes();
+  }
+
   // check collision with all snake cells after this one (modified bubble sort)
   for (var i = 0; i < snake.cells.length; i++) {
       
     // if wormhole 1 occupies same space as a body part redraw, unconfirmed
     if (wormhole.x1 === snake.cells[i].x && wormhole.y1 === snake.cells[i].y) {
-      console.log("There was a snake/wormhole colision!");
       newWormholes();
     }
 
       // if wormhole 1 occupies same space as a body part redraw, unconfirmed
       if (wormhole.x2 === snake.cells[i].x && wormhole.y2 === snake.cells[i].y) {
-      console.log("There was a snake/wormhole colision!");
       newWormholes();
     }
-
-    
   }
-
-  wormhole1Status = true;
-  wormhole2Status = true;
 }
 
 function drawWormholes() {
-  if (wormhole1Status === true){
     context.fillStyle = 'black';
     context.fillRect(wormhole.x1, wormhole.y1, grid, grid);
-  } else {
-    context.fillStyle = document.body.style.backgroundColor;
-    context.fillRect(wormhole.x1, wormhole.y1, grid, grid);
-  }
-  if (wormhole2Status === true){
     context.fillStyle = 'black';
     context.fillRect(wormhole.x2, wormhole.y2, grid, grid);
-  } else {
-    context.fillStyle = document.body.style.backgroundColor;
-    context.fillRect(wormhole.x2, wormhole.y2, grid, grid);
-  }
 }
-
-// wormhole clearing not yet implemented
-function clearWormhole1() {
-  wormhole1Status = false;
-  wormhole.x1 = null;
-  wormhole.y1 = null;
-}
-
-function clearWormhole2() {
-  wormhole2Status = false;
-  wormhole.x2 = null;
-  wormhole.y2 = null;
-}
-
 
 // game loop
 function loop() {
