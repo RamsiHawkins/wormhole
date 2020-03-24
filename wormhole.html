@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title></title>
+  <style>
+  html, body {
+    height: 100%;
+    margin: 0;
+  }
+
+  body {
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  canvas {
+    border: 1px solid black;
+  }
+  </style>
+</head>
+<body>
+<div><canvas width="400" height="400" id="game"></canvas></div>
+<script>
+var canvas = document.getElementById('game');
+var context = canvas.getContext('2d');
+
+var grid = 16;
+var count = 0;
+
+// declare snake variables, actual starting conditions set in resetGame()  
+var snake = {
+  x: 0,
+  y: 0,
+  
+  // snake velocity. moves one grid length every frame in either the x or y direction
+  dx: 0,
+  dy: 0,
+  
+  // keep track of all grids the snake body occupies
+  cells: [],
+  
+  // length of the snake. grows when eating an apple
+  maxCells: 0
+};
+var apple = {
+  x: 0,
+  y: 0
+};
+var wormhole = {
+  x1: 0,
+  y1: 0,
+  x2: 0,
+  y2: 0
+}
+
+var score = 0;
+var highscore = 0;
+
+var snakeGrowthTimer = 0;
+
+var wormhole1Status;
+var wormhole2Status;
+
+resetGame();
+
+// get random whole numbers in a specific range
+// @see https://stackoverflow.com/a/1527820/2124254
+function getRandomInt(min, max) {
+  return Math.floor(Math.random() * (max - min)) + min;
+}
+
+// initial game conditions
+function resetGame() {
+
+    if(score > highscore){
+      highscore = score;
+    }
+    
+    var welcomeMessage = "Wormholes and screen edges teleport.\nApples make you shorter.\n\nStay alive!\n\nLast Score: " + score + "\nHigh Score: " + highscore;
+
+    alert(welcomeMessage);
+    
+    snake.x = 160;
+    snake.y = 160;
+    snake.cells = [];
+    snake.maxCells = 4;
+    snake.dx = grid;
+    snake.dy = 0;
+
+    score = 0;
+    
+    newApple();
+
+    newWormholes();
+
+    // prevent wormhole collision, unconfirmed
+    while (wormhole.x1 === wormhole.x2 && wormhole.y1 === wormhole.y2){
+        wormhole.x2 = getRandomInt(0, 25) * grid;
+        wormhole.y2 = getRandomInt(0, 25) * grid;
+        console.log("There was a wormhole colision!");
+    }
+}
+
+function newApple() {
+  // canvas is 400x400 which is 25x25 grids 
+  apple.x = getRandomInt(0, 25) * grid;
+  apple.y = getRandomInt(0, 25) * grid;
+}
+
+function drawApple() {
+  context.fillStyle = 'red';
+  context.fillRect(apple.x, apple.y, grid-1, grid-1);
+}
+
+function newWormholes() {
+  wormhole.x1 = getRandomInt(0, 25) * grid;
+  wormhole.y1 = getRandomInt(0, 25) * grid;
+
+  wormhole.x2 = getRandomInt(0, 25) * grid;
+  wormhole.y2 = getRandomInt(0, 25) * grid;
+
+  // check collision with all snake cells after this one (modified bubble sort)
+  for (var i = 0; i < snake.cells.length; i++) {
+      
+    // if wormhole 1 occupies same space as a body part redraw, unconfirmed
+    if (wormhole.x1 === snake.cells[i].x && wormhole.y1 === snake.cells[i].y) {
+      console.log("There was a snake/wormhole colision!");
+      newWormholes();
+    }
+
+      // if wormhole 1 occupies same space as a body part redraw, unconfirmed
+      if (wormhole.x2 === snake.cells[i].x && wormhole.y2 === snake.cells[i].y) {
+      console.log("There was a snake/wormhole colision!");
+      newWormholes();
+    }
+
+    
+  }
+
+  wormhole1Status = true;
+  wormhole2Status = true;
+}
+
+function drawWormholes() {
+  if (wormhole1Status === true){
+    context.fillStyle = 'black';
+    context.fillRect(wormhole.x1, wormhole.y1, grid, grid);
+  } else {
+    context.fillStyle = document.body.style.backgroundColor;
+    context.fillRect(wormhole.x1, wormhole.y1, grid, grid);
+  }
+  if (wormhole2Status === true){
+    context.fillStyle = 'black';
+    context.fillRect(wormhole.x2, wormhole.y2, grid, grid);
+  } else {
+    context.fillStyle = document.body.style.backgroundColor;
+    context.fillRect(wormhole.x2, wormhole.y2, grid, grid);
+  }
+}
+
+// wormhole clearing not yet implemented
+function clearWormhole1() {
+  wormhole1Status = false;
+  wormhole.x1 = null;
+  wormhole.y1 = null;
+}
+
+function clearWormhole2() {
+  wormhole2Status = false;
+  wormhole.x2 = null;
+  wormhole.y2 = null;
+}
+
+
+// game loop
+function loop() {
+  requestAnimationFrame(loop);
+
+  // slow game loop to 15 fps instead of 60 (60/15 = 4)
+  if (++count < 5) {
+    return;
+  }
+
+  count = 0;
+  context.clearRect(0,0,canvas.width,canvas.height);
+
+  snakeGrowthTimer++;
+
+  // controls growth rate of snake
+  if (snakeGrowthTimer > 2){
+      snake.maxCells++;
+      snakeGrowthTimer = 0;
+  }
+
+  // move snake by it's velocity
+  snake.x += snake.dx;
+  snake.y += snake.dy;
+
+  // wrap snake position horizontally on edge of screen
+  if (snake.x < 0) {
+    snake.x = canvas.width - grid;
+  }
+  else if (snake.x >= canvas.width) {
+    snake.x = 0;
+  }
+  
+  // wrap snake position vertically on edge of screen
+  if (snake.y < 0) {
+        snake.y = canvas.height - grid;
+  }
+  else if (snake.y >= canvas.height) {
+        snake.y = 0;
+  }
+
+  // teleports snake from wormhole 1 to wormhole 2
+  if (snake.x === wormhole.x1 && snake.y === wormhole.y1){
+    snake.x = wormhole.x2;
+    snake.y = wormhole.y2;
+    newWormholes();
+  }
+
+  // teleports snake from wormhole 2 to wormhole 1
+  if (snake.x === wormhole.x2 && snake.y === wormhole.y2){
+    snake.x = wormhole.x1;
+    snake.y = wormhole.y1;
+    newWormholes();
+  }
+
+  // keep track of where snake has been. front of the array is always the head
+  snake.cells.unshift({x: snake.x, y: snake.y});
+
+  // remove cells as we move away from them
+  if (snake.cells.length > snake.maxCells) {
+    snake.cells.pop();
+  }
+
+  drawApple();
+
+  drawWormholes();
+
+  // draw snake one cell at a time
+  context.fillStyle = 'blue';
+  snake.cells.forEach(function(cell, index) {
+
+    // draw snake segment
+    context.fillRect(cell.x+3, cell.y+3, grid-6, grid-6);  
+
+    // snake ate apple
+    if (cell.x === apple.x && cell.y === apple.y) {
+        snake.maxCells = snake.maxCells - 5;
+            if (snake.maxCells < 1) {
+                resetGame()
+            }
+        snake.cells.pop();
+        snake.cells.pop();
+        snake.cells.pop();
+        snake.cells.pop();
+        snake.cells.pop();
+
+        score++;
+        console.log(score);
+
+        newApple();
+    }
+
+    // check collision with all cells after this one (modified bubble sort)
+    for (var i = index + 1; i < snake.cells.length; i++) {
+      
+      // snake occupies same space as a body part. reset game
+      if (cell.x === snake.cells[i].x && cell.y === snake.cells[i].y) {
+        resetGame()
+      }
+    }
+  });
+}
+
+// listen to keyboard events to move the snake
+document.addEventListener('keydown', function(e) {
+  // prevent snake from backtracking on itself by checking that it's 
+  // not already moving on the same axis (pressing left while moving
+  // left won't do anything, and pressing right while moving left
+  // shouldn't let you collide with your own body)
+  
+  // left arrow key
+  if (e.which === 37 && snake.dx === 0) {
+    snake.dx = -grid;
+    snake.dy = 0;
+  }
+  // up arrow key
+  else if (e.which === 38 && snake.dy === 0) {
+    snake.dy = -grid;
+    snake.dx = 0;
+  }
+  // right arrow key
+  else if (e.which === 39 && snake.dx === 0) {
+    snake.dx = grid;
+    snake.dy = 0;
+  }
+  // down arrow key
+  else if (e.which === 40 && snake.dy === 0) {
+    snake.dy = grid;
+    snake.dx = 0;
+  }
+  // j key
+  if (e.which === 74 && snake.dx === 0) {
+    snake.dx = -grid;
+    snake.dy = 0;
+  }
+  // i key
+  else if (e.which === 73 && snake.dy === 0) {
+    snake.dy = -grid;
+    snake.dx = 0;
+  }
+  // l key
+  else if (e.which === 76 && snake.dx === 0) {
+    snake.dx = grid;
+    snake.dy = 0;
+  }
+  // k key
+  else if (e.which === 75 && snake.dy === 0) {
+    snake.dy = grid;
+    snake.dx = 0;
+  }
+});
+
+// start the game
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
