@@ -11,6 +11,7 @@
   body {
     background: white;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
   }
@@ -20,8 +21,14 @@
   </style>
 </head>
 <body>
+  <div>Wormhole!</div>
+  <div><span>Score:</span><span id="scoreDisplay">0</span></div>
+  <div><span>High Score:</span><span id="highScoreDisplay">0</span></div>
 <div><canvas width="400" height="400" id="game"></canvas></div>
-<script>
+<script type=module>
+
+import drawWormholes from "./drawWormholes.js"
+
 var canvas = document.getElementById('game');
 var context = canvas.getContext('2d');
 
@@ -76,10 +83,14 @@ function resetGame() {
     if(score > highscore){
       highscore = score;
     }
-    
-    var welcomeMessage = "Wormholes and screen edges teleport.\n\nYou constantly grow over time. Apples make you shorter and score points.\n\nStay alive!\n\nLast Score: " + score + "\nHigh Score: " + highscore;
+  
+    document.getElementById('scoreDisplay').innerHTML = "0";
 
-    alert(welcomeMessage);
+    document.getElementById('highScoreDisplay').innerHTML = highscore;
+
+    // var welcomeMessage = "Wormholes and screen edges teleport.\n\nYou constantly grow over time. Apples make you shorter and score points.\n\nStay alive!\n\nLast Score: " + score + "\nHigh Score: " + highscore;
+
+    // alert(welcomeMessage);
     
     snake.x = 160;
     snake.y = 160;
@@ -158,13 +169,6 @@ function newWormholes() {
   }
 }
 
-function drawWormholes() {
-    context.fillStyle = 'black';
-    context.fillRect(wormhole.x1, wormhole.y1, grid, grid);
-    context.fillStyle = 'black';
-    context.fillRect(wormhole.x2, wormhole.y2, grid, grid);
-}
-
 // game loop
 function loop() {
   requestAnimationFrame(loop);
@@ -229,7 +233,7 @@ function loop() {
 
   drawApple();
 
-  drawWormholes();
+  drawWormholes(context,wormhole,grid);
 
   // draw snake one cell at a time
   context.fillStyle = 'blue';
@@ -241,9 +245,6 @@ function loop() {
     // snake ate apple
     if (cell.x === apple.x && cell.y === apple.y) {
         snake.maxCells = snake.maxCells - 5;
-            if (snake.maxCells < 1) {
-                resetGame()
-            }
         snake.cells.pop();
         snake.cells.pop();
         snake.cells.pop();
@@ -251,7 +252,8 @@ function loop() {
         snake.cells.pop();
 
         score++;
-        console.log(score);
+
+        document.getElementById('scoreDisplay').innerHTML = score;
 
         newApple();
     }
