@@ -88,6 +88,8 @@ function resetGame() {
 
     document.getElementById('highScoreDisplay').innerHTML = highscore;
 
+    localStorage.setItem('highscore', highscore);
+
     // var welcomeMessage = "Wormholes and screen edges teleport.\n\nYou constantly grow over time. Apples make you shorter and score points.\n\nStay alive!\n\nLast Score: " + score + "\nHigh Score: " + highscore;
 
     // alert(welcomeMessage);
@@ -252,8 +254,14 @@ function loop() {
         snake.cells.pop();
 
         score++;
+        
+        if(score > highscore){
+          highscore = score;
+        }
 
         document.getElementById('scoreDisplay').innerHTML = score;
+
+        document.getElementById('highScoreDisplay').innerHTML = highscore;
 
         newApple();
     }
