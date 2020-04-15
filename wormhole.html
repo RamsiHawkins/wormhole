@@ -9,25 +9,35 @@
   }
 
   body {
-    background: white;
+    background: black;
+    color: white;
+    font-size: 24px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
   }
+
   canvas {
-    border: 1px solid black;
+    background: white;
   }
+
   </style>
 </head>
 <body>
-  <div>Wormhole!</div>
-  <div><span>Score:</span><span id="scoreDisplay">0</span></div>
-  <div><span>High Score:</span><span id="highScoreDisplay">0</span></div>
-<div><canvas width="400" height="400" id="game"></canvas></div>
-<script type=module>
+  <div style="font-size: 60px;">Wormhole!</div>
+  <div><span>Score: </span><span id="scoreDisplay">0</span></div>
+  <div><span>High Score: </span><span id="highScoreDisplay">0</span></div>
+  <br>
+  <div><canvas width="400" height="400" id="game"></canvas></div>
+  <br>
+  <div>Black dots and screen edges cause you to teleport. </div>
+  <div>You grow constantly, eat apples to shrink and increase your score!</div>
 
-import drawWormholes from "./drawWormholes.js"
+  <script type=module>
+
+import newApple from "./newApple.js"
+import newWormholes from "./newWormholes.js"
 
 var canvas = document.getElementById('game');
 var context = canvas.getContext('2d');
@@ -64,18 +74,15 @@ var wormhole = {
 var score = 0;
 var highscore = 0;
 
+if (localStorage.getItem('highscore')===null) {
+  var highscore = 0;
+} else {
+  var highscore = localStorage.getItem('highscore');
+}
+
 var snakeGrowthTimer = 0;
 
-var wormhole1Status;
-var wormhole2Status;
-
 resetGame();
-
-// get random whole numbers in a specific range
-// @see https://stackoverflow.com/a/1527820/2124254
-function getRandomInt(min, max) {
-  return Math.floor(Math.random() * (max - min)) + min;
-}
 
 // initial game conditions
 function resetGame() {
@@ -90,10 +97,6 @@ function resetGame() {
 
     localStorage.setItem('highscore', highscore);
 
-    // var welcomeMessage = "Wormholes and screen edges teleport.\n\nYou constantly grow over time. Apples make you shorter and score points.\n\nStay alive!\n\nLast Score: " + score + "\nHigh Score: " + highscore;
-
-    // alert(welcomeMessage);
-    
     snake.x = 160;
     snake.y = 160;
     snake.cells = [];
@@ -103,72 +106,9 @@ function resetGame() {
 
     score = 0;
     
-    newApple();
+    newApple(apple,wormhole,snake,grid);
 
-    newWormholes();
-
-    // prevent wormhole collision, unconfirmed
-    while (wormhole.x1 === wormhole.x2 && wormhole.y1 === wormhole.y2){
-        wormhole.x2 = getRandomInt(0, 25) * grid;
-        wormhole.y2 = getRandomInt(0, 25) * grid;
-        console.log("There was a wormhole colision!");
-    }
-}
-
-function newApple() {
-  // canvas is 400x400 which is 25x25 grids 
-  apple.x = getRandomInt(0, 25) * grid;
-  apple.y = getRandomInt(0, 25) * grid;
-
-  // check collisions with wormholes
-  if (wormhole.x1 === apple.x && wormhole.y1 === apple.y) {
-    newApple();
-  }
-  if (wormhole.x2 === apple.x && wormhole.y2 === apple.y) {
-    newApple();
-  }
-
-  // check collision with all snake cells
-  for (var i = 0; i < snake.cells.length; i++) {
-    if (apple.x === snake.cells[i].x && apple.y === snake.cells[i].y) {
-      newApple();
-    }
-  }
-}
-
-function drawApple() {
-  context.fillStyle = 'red';
-  context.fillRect(apple.x, apple.y, grid-1, grid-1);
-}
-
-function newWormholes() {
-  wormhole.x1 = getRandomInt(0, 25) * grid;
-  wormhole.y1 = getRandomInt(0, 25) * grid;
-
-  wormhole.x2 = getRandomInt(0, 25) * grid;
-  wormhole.y2 = getRandomInt(0, 25) * grid;
-
-  // check collisions with apple
-  if (wormhole.x1 === apple.x && wormhole.y1 === apple.y) {
-    newWormholes();
-  }
-  if (wormhole.x2 === apple.x && wormhole.y2 === apple.y) {
-    newWormholes();
-  }
-
-  // check collision with all snake cells after this one (modified bubble sort)
-  for (var i = 0; i < snake.cells.length; i++) {
-      
-    // if wormhole 1 occupies same space as a body part redraw, unconfirmed
-    if (wormhole.x1 === snake.cells[i].x && wormhole.y1 === snake.cells[i].y) {
-      newWormholes();
-    }
-
-      // if wormhole 1 occupies same space as a body part redraw, unconfirmed
-      if (wormhole.x2 === snake.cells[i].x && wormhole.y2 === snake.cells[i].y) {
-      newWormholes();
-    }
-  }
+    newWormholes(apple,wormhole,snake,grid);
 }
 
 // game loop
@@ -215,14 +155,14 @@ function loop() {
   if (snake.x === wormhole.x1 && snake.y === wormhole.y1){
     snake.x = wormhole.x2;
     snake.y = wormhole.y2;
-    newWormholes();
+    newWormholes(apple,wormhole,snake,grid);
   }
 
   // teleports snake from wormhole 2 to wormhole 1
   if (snake.x === wormhole.x2 && snake.y === wormhole.y2){
     snake.x = wormhole.x1;
     snake.y = wormhole.y1;
-    newWormholes();
+    newWormholes(apple,wormhole,snake,grid);
   }
 
   // keep track of where snake has been. front of the array is always the head
@@ -233,9 +173,15 @@ function loop() {
     snake.cells.pop();
   }
 
-  drawApple();
+  // draw apple
+  context.fillStyle = 'red';
+  context.fillRect(apple.x, apple.y, grid-1, grid-1);
 
-  drawWormholes(context,wormhole,grid);
+  // draw wormhole
+  context.fillStyle = 'black';
+  context.fillRect(wormhole.x1, wormhole.y1, grid, grid);
+  context.fillStyle = 'black';
+  context.fillRect(wormhole.x2, wormhole.y2, grid, grid);
 
   // draw snake one cell at a time
   context.fillStyle = 'blue';
@@ -260,10 +206,11 @@ function loop() {
         }
 
         document.getElementById('scoreDisplay').innerHTML = score;
-
         document.getElementById('highScoreDisplay').innerHTML = highscore;
 
-        newApple();
+        localStorage.setItem('highscore', highscore);
+
+        newApple(apple,wormhole,snake,grid);
     }
 
     // check collision with all cells after this one (modified bubble sort)
