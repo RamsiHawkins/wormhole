@@ -72,7 +72,12 @@ var wormhole = {
 }
 
 var score = 0;
-var highscore = 0;
+
+if(localStorage.getItem('highscore')===null){
+  var highscore = 0;
+}else {
+  var highscore = localStorage.getItem('highscore');
+}
 
 if (localStorage.getItem('highscore')===null) {
   var highscore = 0;
@@ -95,8 +100,15 @@ function resetGame() {
 
     document.getElementById('highScoreDisplay').innerHTML = highscore;
 
+<<<<<<< HEAD
     localStorage.setItem('highscore', highscore);
 
+=======
+    // var welcomeMessage = "Wormholes and screen edges teleport.\n\nYou constantly grow over time. Apples make you shorter and score points.\n\nStay alive!\n\nLast Score: " + score + "\nHigh Score: " + highscore;
+
+    // alert(welcomeMessage);
+    
+>>>>>>> 22d64486f75974db7bc32836e375ace4d26df3c5
     snake.x = 160;
     snake.y = 160;
     snake.cells = [];
@@ -200,17 +212,21 @@ function loop() {
         snake.cells.pop();
 
         score++;
-        
         if(score > highscore){
           highscore = score;
         }
-
+      
         document.getElementById('scoreDisplay').innerHTML = score;
         document.getElementById('highScoreDisplay').innerHTML = highscore;
+<<<<<<< HEAD
 
         localStorage.setItem('highscore', highscore);
 
         newApple(apple,wormhole,snake,grid);
+=======
+        localStorage.setItem('highscore', highscore);
+        newApple();
+>>>>>>> 22d64486f75974db7bc32836e375ace4d26df3c5
     }
 
     // check collision with all cells after this one (modified bubble sort)
